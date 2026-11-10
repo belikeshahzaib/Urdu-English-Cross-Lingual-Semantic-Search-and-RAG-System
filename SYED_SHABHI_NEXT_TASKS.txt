@@ -1,0 +1,79 @@
+NEXT TASKS FOR SYED SHABHI HAIDER
+Project: Urdu-English Cross-Lingual Semantic Search and RAG System
+
+The existing Shahzaib work covers Wikipedia data collection and preprocessing,
+FAISS/BM25 indexing, dense/BM25/hybrid retrieval, the /search API, search UI,
+and retrieval evaluation scaffolding. Do not duplicate those parts. Coordinate
+with Shahzaib before changing shared interfaces or files.
+
+YOUR NEXT PART: RAG ANSWER GENERATION
+
+1. Agree with Shahzaib on the LLM provider (Groq or Gemini), model, and answer
+   response format before implementation. Keep the provider key in a local
+   .env file; never add keys to source control.
+
+2. Create src/generation.py
+   - Accept a query and retrieved passages.
+   - Build a prompt that answers only from the supplied passages.
+   - Return a clear insufficient-evidence response when the passages do not
+     support an answer.
+   - Return the answer and citations tied to the retrieved chunk IDs, article
+     titles, and source URLs.
+   - Keep provider calls separate from the FastAPI route so they can be tested.
+
+3. Update api/app.py
+   - Add POST /answer without breaking POST /search or the existing search UI.
+   - Reuse the existing Retriever; retrieve context before generating an answer.
+   - Validate the request and return the answer with its citations.
+   - Return clear API errors for missing configuration or provider failures.
+
+4. Update frontend/index.html
+   - Add an answer/RAG interaction alongside the existing passage search.
+   - Display the generated answer and clickable citations.
+   - Keep the existing ranked search results available.
+   - Render query and model output as text, not injected HTML.
+
+5. Add tests
+   - Create tests/test_generation.py for prompt/context handling, citations,
+     insufficient evidence, and provider error handling using mocked provider
+     responses; tests must not require a live API key.
+   - Extend tests/test_pipeline.py or add tests/test_api.py to cover /answer
+     request validation, successful response shape, and service errors.
+
+6. Add RAG evaluation
+   - Create evaluation/rag_queries.csv with bilingual queries, reference
+     answers, and relevant article/chunk IDs.
+   - Create evaluation/evaluate_rag.py to save generated answers and citations
+     for review. Record faithfulness and answer relevance using a documented
+     scoring rubric; do not report scores until the queries have been run and
+     the outputs reviewed.
+   - Reuse evaluation/queries.csv where appropriate, but do not assume its
+     current retrieval labels are final until checked against the collected
+     corpus.
+
+7. Update requirements.txt only if the selected provider needs a package not
+   already listed. Update README.md with provider setup, .env variable names,
+   how to run /answer, and any API cost or free-tier limitations.
+
+8. Before handoff, run the tests and lint checks, verify /search still works,
+   confirm no API keys or generated secrets were committed, and share the
+   provider choice and any run limitations with Shahzaib.
+
+FILES TO CREATE
+- src/generation.py
+- tests/test_generation.py
+- evaluation/rag_queries.csv
+- evaluation/evaluate_rag.py
+
+FILES TO UPDATE
+- api/app.py
+- frontend/index.html
+- README.md
+- requirements.txt only if needed
+
+NOT IN THIS HANDOFF
+- Do not replace or reimplement Shahzaib's retrieval pipeline.
+- Do not claim completed experiments or RAG quality scores without running and
+  reviewing the actual results.
+- Shared report writing, literature review, integration review, and demo
+  rehearsal should be coordinated by both team members.
