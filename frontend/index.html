@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Search Pakistan-related Wikipedia passages in English and Urdu.">
+    <title>Urdu-English Semantic Search</title>
+    <style>
+        :root {
+            color-scheme: light;
+            font-family: system-ui, sans-serif;
+            background: #f4f7f5;
+            color: #17231d;
+        }
+        body {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+        h1 { color: #176b45; }
+        form { display: flex; gap: .75rem; }
+        input, button {
+            border: 1px solid #aebdb4;
+            border-radius: .5rem;
+            font: inherit;
+            padding: .8rem 1rem;
+        }
+        input { flex: 1; min-width: 0; }
+        button { background: #176b45; color: white; cursor: pointer; }
+        button:disabled { cursor: wait; opacity: .7; }
+        #status { min-height: 1.5rem; }
+        .result-item {
+            background: white;
+            border: 1px solid #d5dfd9;
+            border-radius: .6rem;
+            margin: 1rem 0;
+            padding: 1rem;
+        }
+        .result-item p { line-height: 1.7; white-space: pre-wrap; }
+        .metadata { color: #52635a; font-size: .9rem; }
+        @media (max-width: 560px) {
+            form { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <h1>Urdu-English Semantic Search</h1>
+        <p>Search Wikipedia passages in English or Urdu.</p>
+        <form id="search-form">
+            <input id="query" name="query" type="search" maxlength="2000"
+                   placeholder="Enter a question or search phrase" required>
+            <button id="submit" type="submit">Search</button>
+        </form>
+        <p id="status" role="status" aria-live="polite"></p>
+        <section id="results" aria-label="Search results"></section>
+    </main>
+    <script>
+        const form = document.getElementById("search-form");
+        const queryInput = document.getElementById("query");
+        const submitButton = document.getElementById("submit");
+        const status = document.getElementById("status");
+        const results = document.getElementById("results");
+
+        function appendResult(result) {
+            const article = document.createElement("article");
+            article.className = "result-item";
+
+            const title = document.createElement("h2");
+            title.textContent = result.doc_title || result.chunk_id;
+            article.append(title);
+
+            const passage = document.createElement("p");
+            passage.dir = "auto";
+            passage.textContent = result.text;
+            article.append(passage);
+
+            const metadata = document.createElement("p");
+            metadata.className = "metadata";
+            metadata.textContent = `${result.lang || ""} · ${result.license || ""} · Score: ${Number(result.score).toFixed(4)} · ${result.chunk_id}`;
+            article.append(metadata);
+
+            if (result.url) {
+                const source = document.createElement("a");
+                source.href = result.url;
+                source.target = "_blank";
+                source.rel = "noopener noreferrer";
+                source.textContent = "Wikipedia source";
+                article.append(source);
+            }
+            results.append(article);
+        }
+
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const query = queryInput.value.trim();
+            results.replaceChildren();
+            if (!query) {
+                status.textContent = "Enter a search query.";
+                return;
+            }
+
+            submitButton.disabled = true;
+            status.textContent = "Searching…";
+            try {
+                const response = await fetch("/search", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ query, k: 5 })
+                });
+                const payload = await response.json();
+                if (!response.ok) {
+                    throw new Error(payload.detail || `Search failed (${response.status}).`);
+                }
+                payload.results.forEach(appendResult);
+                status.textContent = payload.results.length
+                    ? `${payload.results.length} results`
+                    : "No results found.";
+            } catch (error) {
+                status.textContent = error.message || "Search failed.";
+            } finally {
+                submitButton.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

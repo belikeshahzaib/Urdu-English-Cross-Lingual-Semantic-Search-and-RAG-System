@@ -1,0 +1,41 @@
+query_id,query,language_type,relevant_article_ids
+en-01,What is the capital city of Pakistan?,english,Islamabad
+en-02,Which city is Pakistan's largest by population?,english,Karachi
+en-03,What is Lahore known for in Pakistan's history and culture?,english,Lahore
+en-04,Which river flows through Pakistan and has shaped its agriculture?,english,Indus River
+en-05,Where did the ancient Indus Valley civilisation develop?,english,Indus Valley Civilisation
+en-06,Which empire ruled much of the region before British rule?,english,Mughal Empire
+en-07,What movement led to the creation of Pakistan?,english,Pakistan Movement
+en-08,Who founded Pakistan and became its first governor-general?,english,Muhammad Ali Jinnah
+en-09,Who was the first woman to serve as Pakistan's prime minister?,english,Benazir Bhutto
+en-10,What are the main features of Pakistan's economy?,english,Economy of Pakistan
+en-11,What physical regions make up Pakistan's geography?,english,Geography of Pakistan
+en-12,What is the history of the modern state of Pakistan?,english,History of Pakistan
+en-13,What languages are spoken across Pakistan?,english,Languages of Pakistan
+en-14,How does Pakistan's climate vary across the country?,english,Climate of Pakistan
+en-15,What is the role of education in Pakistan?,english,Education in Pakistan
+en-16,What are important elements of Pakistani culture?,english,Culture of Pakistan
+en-17,What are the main political institutions in Pakistan?,english,Politics of Pakistan
+en-18,Which province contains Peshawar?,english,Khyber Pakhtunkhwa
+en-19,Which province has Hyderabad as one of its major cities?,english,Sindh
+en-20,Which province includes Quetta?,english,"Balochistan, Pakistan"
+xu-01,What is the national capital of Pakistan?,english_to_urdu,اسلام آباد
+xu-02,Which Pakistani city is the major port and financial centre?,english_to_urdu,کراچی
+xu-03,Which city is known for the Badshahi Mosque and Lahore Fort?,english_to_urdu,لاہور
+xu-04,Which river is central to Pakistan's irrigation system?,english_to_urdu,دریائے سندھ
+xu-05,Which ancient civilisation flourished around Harappa and Mohenjo-daro?,english_to_urdu,وادی سندھ کی تہذیب
+xu-06,Which dynasty built many famous monuments in the subcontinent?,english_to_urdu,مغلیہ سلطنت
+xu-07,What political movement sought a separate homeland for Muslims in South Asia?,english_to_urdu,تحریک پاکستان
+xu-08,Who is widely known as the founder of Pakistan?,english_to_urdu,محمد علی جناح
+xu-09,Which Pakistani leader became the country's first female prime minister?,english_to_urdu,بے نظیر بھٹو
+xu-10,Which province includes the city of Karachi?,english_to_urdu,سندھ
+xu-11,Which province is located in Pakistan's southwest?,english_to_urdu,"بلوچستان، پاکستان"
+xu-12,Which province includes the city of Peshawar?,english_to_urdu,خیبر پختونخوا
+xu-13,Which province is associated with Lahore and Faisalabad?,english_to_urdu,"پنجاب، پاکستان"
+xu-14,What is Pakistan's largest city and main seaport?,english_to_urdu,کراچی
+xu-15,Which city serves as the seat of Pakistan's federal government?,english_to_urdu,اسلام آباد
+xu-16,Which river valley supported early urban settlements in South Asia?,english_to_urdu,دریائے سندھ
+xu-17,Who led the Pakistan Movement and became the country's first governor-general?,english_to_urdu,محمد علی جناح
+xu-18,Which historical empire left landmarks such as the Taj Mahal and Lahore Fort?,english_to_urdu,مغلیہ سلطنت
+xu-19,What is the name of the region that became Pakistan in 1947?,english_to_urdu,پاکستان
+xu-20,Which country has Islamabad as its capital and Karachi as its largest city?,english_to_urdu,پاکستان
