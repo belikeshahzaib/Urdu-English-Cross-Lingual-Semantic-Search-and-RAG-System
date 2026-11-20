@@ -203,3 +203,29 @@ The tests use mocked provider responses and need no API key. `pytest.ini` puts t
 ## Wikipedia attribution
 
 Wikipedia article text is reused under CC BY-SA 4.0. The corpus preserves each article's title, source URL, language, and license; search results and answer citations link back to the source. Keep these attribution fields when distributing processed data and include attribution and the license when redistributing adapted text.
+
+## Future work
+
+**Evaluation**
+- Finish the RAG review: a second reviewer independently scores at least 10 rows, agreement is recorded, and the final scores are added to the Results section.
+- Re-check faithfulness on rows where retrieval missed the labeled article, to see whether the model answered from outside knowledge instead of the cited passage.
+- Decide how a correct abstention in the wrong language is scored, and state it in `RAG_RUBRIC.md`.
+- Grow `rag_queries.csv` beyond 26 queries, with more Urdu-language questions, multi-passage questions and unanswerable ones, so per-language scores rest on more than a handful of rows.
+- Extend the English-to-Urdu labels to include the English article title, or add a cross-language match, so `retrieval_hit` reflects relevant content and not only exact titles.
+
+**Generation**
+- Strengthen the prompt, or add a check that the cited passage supports each claim, to reduce answers that come from model memory.
+- Return the insufficient-evidence message in the language of the question (it is currently English only).
+- Ask the model for plain text, or render markdown safely, so `**bold**` does not appear as literal asterisks.
+- Add a retry with backoff for HTTP 429 rate-limit errors, so evaluation no longer needs a long fixed `--delay`.
+- Compare other models or reasoning settings for speed and quality. Any change means re-running and re-scoring the evaluation, so scores from different configurations are not mixed.
+
+**Retrieval (coordinate with Shahzaib)**
+- Tune `k` and the hybrid weight `alpha` for answer quality, not only for ranking metrics.
+- Try reranking the top passages before generation, and test whether cross-language retrieval improves for English queries about Urdu articles.
+
+**Application**
+- Stream the answer to the page as it is generated, to cut the perceived wait.
+- Cache answers to repeated queries, and add request rate limiting for any public deployment.
+- Add a language toggle and a right-to-left layout for the interface itself.
+- Add automated browser tests for the page.
