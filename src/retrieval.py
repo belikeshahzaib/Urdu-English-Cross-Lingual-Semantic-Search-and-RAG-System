@@ -8,7 +8,6 @@ import pandas as pd
 
 from src.preprocessing import normalize_urdu_text
 
-
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CHUNKS = ROOT / "data" / "processed" / "chunks.csv"
 DEFAULT_FAISS = ROOT / "indexes" / "vector_index.faiss"

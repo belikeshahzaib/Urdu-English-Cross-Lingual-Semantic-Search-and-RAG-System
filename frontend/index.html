@@ -6,120 +6,391 @@
     <meta name="description" content="Search Pakistan-related Wikipedia passages in English and Urdu.">
     <title>Urdu-English Semantic Search</title>
     <style>
+        /* Urdu glyphs use an installed Nastaliq/Naskh face when one exists; Latin falls through. */
+        @font-face {
+            font-family: "UrduFace";
+            src: local("Noto Nastaliq Urdu"), local("Jameel Noori Nastaleeq"),
+                 local("Urdu Typesetting"), local("Noto Naskh Arabic"), local("Segoe UI");
+            unicode-range: U+0600-06FF, U+0750-077F, U+FB50-FDFF, U+FE70-FEFF;
+        }
         :root {
-            color-scheme: light;
-            font-family: system-ui, sans-serif;
-            background: #f4f7f5;
-            color: #17231d;
+            color-scheme: light dark;
+            --bg: #eceff3;
+            --panel: #f7f8fa;
+            --ink: #111b3c;
+            --muted: #5a6482;
+            --rule: #c3cada;
+            --accent: #a82329;
+            --accent-ink: #ffffff;
+            --warn: #7a5200;
+            --serif: "UrduFace", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+            --sans: "UrduFace", system-ui, "Segoe UI", Roboto, sans-serif;
         }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0d1330;
+                --panel: #141b3d;
+                --ink: #e9ebf5;
+                --muted: #98a1c4;
+                --rule: #2b345f;
+                --accent: #ee7173;
+                --accent-ink: #0d1330;
+                --warn: #e6b450;
+            }
+        }
+        * { box-sizing: border-box; }
+        html { background: var(--bg); }
         body {
-            max-width: 860px;
-            margin: 0 auto;
-            padding: 2rem 1rem;
+            margin: 0;
+            color: var(--ink);
+            font-family: var(--serif);
+            font-size: 1.05rem;
+            line-height: 1.7;
         }
-        h1 { color: #176b45; }
-        form { display: flex; gap: .75rem; }
-        input, button {
-            border: 1px solid #aebdb4;
-            border-radius: .5rem;
+        /* woven band along the top edge: a nod to ajrak block-printing */
+        body::before {
+            content: "";
+            display: block;
+            height: 10px;
+            background:
+                repeating-linear-gradient(90deg, var(--accent) 0 14px, transparent 14px 20px),
+                var(--ink);
+            background-size: 100% 3px, 100% 100%;
+            background-repeat: no-repeat;
+            background-position: 0 100%, 0 0;
+        }
+        main { max-width: 760px; margin: 0 auto; padding: 2.5rem 1.25rem 5rem; }
+
+        header { display: flex; justify-content: space-between; align-items: baseline; gap: 1.5rem; }
+        h1 {
+            margin: 0;
+            font-size: clamp(2rem, 6vw, 3.2rem);
+            line-height: 1.1;
+            font-weight: 600;
+            letter-spacing: -.02em;
+        }
+        .urdu-title {
+            font-size: clamp(1.6rem, 5vw, 2.4rem);
+            color: var(--accent);
+            line-height: 1.6;
+            white-space: nowrap;
+        }
+        .lede { margin: .75rem 0 2rem; color: var(--muted); max-width: 52ch; }
+
+        form { display: flex; flex-wrap: wrap; gap: .75rem 1rem; align-items: end; }
+        .field { flex: 1 1 100%; }
+        input[type="search"] {
+            width: 100%;
+            background: transparent;
+            border: 0;
+            border-bottom: 2px solid var(--ink);
+            border-radius: 0;
+            color: inherit;
             font: inherit;
-            padding: .8rem 1rem;
+            font-size: 1.35rem;
+            padding: .4rem 0 .5rem;
         }
-        input { flex: 1; min-width: 0; }
-        button { background: #176b45; color: white; cursor: pointer; }
-        button:disabled { cursor: wait; opacity: .7; }
-        #status { min-height: 1.5rem; }
+        input[type="search"]::placeholder { color: var(--muted); opacity: .8; }
+        input[type="search"]:focus { outline: none; border-bottom-color: var(--accent); }
+        button {
+            font: 600 .95rem/1 var(--sans);
+            padding: .85rem 1.3rem;
+            border: 2px solid var(--ink);
+            border-radius: 2px;
+            background: transparent;
+            color: var(--ink);
+            cursor: pointer;
+        }
+        button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+        button:hover:not(:disabled) { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+        button:disabled { cursor: wait; opacity: .55; }
+        button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+        #bar { height: 3px; margin-top: 1.25rem; background: var(--rule); overflow: hidden; }
+        #bar::after { content: ""; display: block; height: 100%; width: 0; background: var(--accent); }
+        body.busy #bar::after { width: 40%; animation: sweep 1.1s ease-in-out infinite; }
+        @keyframes sweep { from { margin-left: -40%; } to { margin-left: 100%; } }
+        @media (prefers-reduced-motion: reduce) { body.busy #bar::after { animation: none; width: 100%; } }
+
+        #status { min-height: 1.6rem; margin: .75rem 0 1rem; font: .95rem/1.5 var(--sans); color: var(--muted); }
+
+        /* generated answer */
+        .answer-box {
+            background: var(--panel);
+            border-left: 5px solid var(--accent);
+            padding: 1.25rem 1.5rem 1.4rem;
+            margin: .5rem 0 2rem;
+        }
+        .answer-box.insufficient { border-left-style: dashed; border-left-color: var(--warn); }
+        .answer-box h2 { margin: 0 0 .5rem; font: 600 .95rem/1.4 var(--sans); color: var(--muted); }
+        .answer-text { font-size: 1.2rem; line-height: 1.9; margin: 0; white-space: pre-wrap; }
+        .mark {
+            display: inline-block;
+            min-width: 1.35em;
+            margin: 0 .15em;
+            padding: 0 .25em;
+            font: 600 .75rem/1.5 var(--sans);
+            text-align: center;
+            text-decoration: none;
+            color: var(--accent-ink);
+            background: var(--accent);
+            border-radius: 2px;
+            vertical-align: .15em;
+        }
+        .answer-box h3 { margin: 1.5rem 0 .25rem; font: 600 .95rem/1.4 var(--sans); color: var(--muted); }
+        .citations { list-style: none; margin: 0; padding: 0; }
+        .citations li { padding: .7rem 0; border-top: 1px solid var(--rule); scroll-margin-top: 1rem; }
+        .citations li:target { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+        .citations .mark { margin-left: 0; }
+        .src-meta { margin-left: .75rem; font: .85rem/1.4 var(--sans); color: var(--muted); }
+        details { margin-top: .4rem; }
+        summary { cursor: pointer; font: .9rem/1.4 var(--sans); color: var(--muted); }
+        details p { margin: .5rem 0 0; font-size: .98rem; line-height: 1.8; }
+        .footnote { margin: 1.25rem 0 0; font: .85rem/1.5 var(--sans); color: var(--muted); }
+
+        /* ranked passages */
         .result-item {
-            background: white;
-            border: 1px solid #d5dfd9;
-            border-radius: .6rem;
-            margin: 1rem 0;
-            padding: 1rem;
+            display: grid;
+            grid-template-columns: 3.4rem 1fr;
+            column-gap: 1rem;
+            padding: 1.5rem 0;
+            border-top: 1px solid var(--rule);
         }
-        .result-item p { line-height: 1.7; white-space: pre-wrap; }
-        .metadata { color: #52635a; font-size: .9rem; }
+        .rank { font-size: 2.6rem; line-height: 1; font-style: italic; color: var(--accent); }
+        .result-item h2 { margin: 0 0 .5rem; font-size: 1.35rem; line-height: 1.5; }
+        .result-item p { margin: 0 0 .75rem; white-space: pre-wrap; line-height: 1.85; }
+        .result-item .metadata { display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; margin: 0 0 .5rem; font: .85rem/1.5 var(--sans); color: var(--muted); }
+        .result-item a { font: 600 .9rem/1.4 var(--sans); }
+        a { color: var(--accent); text-underline-offset: 3px; }
+
         @media (max-width: 560px) {
-            form { flex-direction: column; }
+            header { flex-direction: column; align-items: flex-start; gap: 0; }
+            .result-item { grid-template-columns: 1fr; }
+            .rank { font-size: 1.8rem; margin-bottom: .25rem; }
+            button { flex: 1; }
         }
     </style>
 </head>
 <body>
     <main>
-        <h1>Urdu-English Semantic Search</h1>
-        <p>Search Wikipedia passages in English or Urdu.</p>
+        <header>
+            <h1>Ask in either language</h1>
+            <span class="urdu-title" lang="ur" dir="rtl">کسی بھی زبان میں</span>
+        </header>
+        <p class="lede">Search Wikipedia passages about Pakistan in English or Urdu, or ask a question and get an answer cited from those passages.</p>
         <form id="search-form">
-            <input id="query" name="query" type="search" maxlength="2000"
-                   placeholder="Enter a question or search phrase" required>
-            <button id="submit" type="submit">Search</button>
+            <div class="field">
+                <input id="query" name="query" type="search" maxlength="2000" dir="auto"
+                       placeholder="Type a question or a phrase" aria-label="Question or search phrase" required>
+            </div>
+            <button id="answer-btn" class="primary" type="button">Get answer</button>
+            <button id="submit" type="submit">Search passages</button>
         </form>
+        <div id="bar" aria-hidden="true"></div>
         <p id="status" role="status" aria-live="polite"></p>
+        <section id="answer" aria-label="Generated answer"></section>
         <section id="results" aria-label="Search results"></section>
     </main>
     <script>
         const form = document.getElementById("search-form");
         const queryInput = document.getElementById("query");
         const submitButton = document.getElementById("submit");
-        const status = document.getElementById("status");
+        const answerButton = document.getElementById("answer-btn");
+        const statusEl = document.getElementById("status");
         const results = document.getElementById("results");
+        const answerSection = document.getElementById("answer");
+        const LANG_NAMES = { en: "English", ur: "اردو" };
+
+        function setBusy(busy) {
+            submitButton.disabled = busy;
+            answerButton.disabled = busy;
+            document.body.classList.toggle("busy", busy);
+        }
+
+        function safeUrl(url) {
+            return typeof url === "string" && /^https?:\/\//i.test(url) ? url : "";
+        }
+
+        function el(tag, className, text) {
+            const node = document.createElement(tag);
+            if (className) node.className = className;
+            if (text !== undefined) node.textContent = text;
+            return node;
+        }
 
         function appendResult(result) {
-            const article = document.createElement("article");
-            article.className = "result-item";
+            const article = el("article", "result-item");
+            article.append(el("div", "rank", String(results.children.length + 1)));
 
-            const title = document.createElement("h2");
-            title.textContent = result.doc_title || result.chunk_id;
-            article.append(title);
+            const body = el("div");
+            const title = el("h2", "", result.doc_title || result.chunk_id);
+            title.dir = "auto";
+            body.append(title);
 
-            const passage = document.createElement("p");
+            const passage = el("p", "", result.text);
             passage.dir = "auto";
-            passage.textContent = result.text;
-            article.append(passage);
+            body.append(passage);
 
-            const metadata = document.createElement("p");
-            metadata.className = "metadata";
-            metadata.textContent = `${result.lang || ""} · ${result.license || ""} · Score: ${Number(result.score).toFixed(4)} · ${result.chunk_id}`;
-            article.append(metadata);
+            const metadata = el("div", "metadata");
+            [
+                LANG_NAMES[result.lang] || result.lang || "",
+                result.license || "",
+                "score " + Number(result.score).toFixed(4),
+                result.chunk_id
+            ].filter(Boolean).forEach((item) => {
+                const span = el("span", "", item);
+                span.dir = "auto";
+                metadata.append(span);
+            });
+            body.append(metadata);
 
-            if (result.url) {
-                const source = document.createElement("a");
-                source.href = result.url;
+            const href = safeUrl(result.url);
+            if (href) {
+                const source = el("a", "", "Read on Wikipedia");
+                source.href = href;
                 source.target = "_blank";
                 source.rel = "noopener noreferrer";
-                source.textContent = "Wikipedia source";
-                article.append(source);
+                body.append(source);
             }
+            article.append(body);
             results.append(article);
+        }
+
+        // Text is always inserted as text nodes. [n] markers become links only
+        // when they match a returned citation.
+        function fillAnswerText(node, text, known) {
+            text.split(/(\[\d+\])/).forEach((part) => {
+                const match = /^\[(\d+)\]$/.exec(part);
+                if (match && known.has(match[1])) {
+                    const link = el("a", "mark", match[1]);
+                    link.href = "#cite-" + match[1];
+                    link.setAttribute("aria-label", "Source " + match[1]);
+                    node.append(link);
+                } else {
+                    node.append(document.createTextNode(part));
+                }
+            });
+        }
+
+        function renderAnswer(payload) {
+            answerSection.replaceChildren();
+            const box = el("div", "answer-box" + (payload.sufficient_evidence ? "" : " insufficient"));
+            box.append(el("h2", "", payload.sufficient_evidence ? "Answer" : "No answer from these passages"));
+
+            const citations = Array.isArray(payload.citations) ? payload.citations : [];
+            const known = new Set(citations.map((c) => String(c.marker)));
+            const text = el("p", "answer-text");
+            text.dir = "auto";
+            fillAnswerText(text, payload.answer, known);
+            box.append(text);
+
+            if (citations.length) {
+                box.append(el("h3", "", "Sources"));
+                const list = el("ul", "citations");
+                citations.forEach((citation) => {
+                    const item = el("li");
+                    item.id = "cite-" + citation.marker;
+                    item.append(el("span", "mark", String(citation.marker)));
+
+                    const name = citation.title || citation.chunk_id;
+                    const href = safeUrl(citation.url);
+                    if (href) {
+                        const link = el("a", "", name);
+                        link.href = href;
+                        link.target = "_blank";
+                        link.rel = "noopener noreferrer";
+                        link.dir = "auto";
+                        item.append(link);
+                    } else {
+                        const plain = el("span", "", name);
+                        plain.dir = "auto";
+                        item.append(plain);
+                    }
+                    item.append(el("span", "src-meta", [citation.chunk_id, citation.license].filter(Boolean).join("  ")));
+
+                    if (citation.text) {
+                        const details = el("details");
+                        details.append(el("summary", "", "Show passage"));
+                        const excerpt = el("p", "", citation.text);
+                        excerpt.dir = "auto";
+                        details.append(excerpt);
+                        item.append(details);
+                    }
+                    list.append(item);
+                });
+                box.append(list);
+            }
+
+            if (payload.model) {
+                box.append(el("p", "footnote",
+                    "Written by " + payload.provider + " / " + payload.model +
+                    ". Check the cited passages before relying on this answer."));
+            }
+            answerSection.append(box);
+        }
+
+        async function postJson(path, query) {
+            const response = await fetch(path, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ query, k: 5 })
+            });
+            const payload = await response.json();
+            if (!response.ok) {
+                const detail = typeof payload.detail === "string"
+                    ? payload.detail
+                    : "Request failed (" + response.status + ").";
+                throw new Error(detail);
+            }
+            return payload;
         }
 
         form.addEventListener("submit", async (event) => {
             event.preventDefault();
             const query = queryInput.value.trim();
             results.replaceChildren();
+            answerSection.replaceChildren();
             if (!query) {
-                status.textContent = "Enter a search query.";
+                statusEl.textContent = "Enter a question or phrase to search.";
                 return;
             }
 
-            submitButton.disabled = true;
-            status.textContent = "Searching…";
+            setBusy(true);
+            statusEl.textContent = "Searching\u2026";
             try {
-                const response = await fetch("/search", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ query, k: 5 })
-                });
-                const payload = await response.json();
-                if (!response.ok) {
-                    throw new Error(payload.detail || `Search failed (${response.status}).`);
-                }
+                const payload = await postJson("/search", query);
                 payload.results.forEach(appendResult);
-                status.textContent = payload.results.length
-                    ? `${payload.results.length} results`
-                    : "No results found.";
+                statusEl.textContent = payload.results.length
+                    ? payload.results.length + " passages, ranked by relevance"
+                    : "No passages found. Try different words.";
             } catch (error) {
-                status.textContent = error.message || "Search failed.";
+                statusEl.textContent = error.message || "Search failed.";
             } finally {
-                submitButton.disabled = false;
+                setBusy(false);
+            }
+        });
+
+        answerButton.addEventListener("click", async () => {
+            const query = queryInput.value.trim();
+            results.replaceChildren();
+            answerSection.replaceChildren();
+            if (!query) {
+                statusEl.textContent = "Enter a question to answer.";
+                return;
+            }
+
+            setBusy(true);
+            statusEl.textContent = "Reading the passages\u2026";
+            try {
+                const payload = await postJson("/answer", query);
+                renderAnswer(payload);
+                statusEl.textContent = payload.sufficient_evidence
+                    ? "Answer written from the retrieved passages."
+                    : "The retrieved passages do not cover this question.";
+            } catch (error) {
+                statusEl.textContent = error.message || "Answer generation failed.";
+            } finally {
+                setBusy(false);
             }
         });
     </script>

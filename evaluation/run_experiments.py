@@ -8,7 +8,6 @@ from src.indexing import MODEL_NAMES, build_indexes
 from src.preprocessing import preprocess_corpus
 from src.retrieval import Retriever
 
-
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_QUERIES = ROOT / "evaluation" / "queries.csv"
 DEFAULT_CORPUS = ROOT / "data" / "raw" / "corpus.csv"

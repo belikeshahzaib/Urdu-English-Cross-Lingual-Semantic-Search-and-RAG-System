@@ -4,7 +4,6 @@ from pathlib import Path
 
 import pandas as pd
 
-
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = ROOT / "data" / "raw" / "corpus.csv"
 USER_AGENT = "UrduEnglishSemanticSearch/1.0 (academic project)"

@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pandas as pd
 
-
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_INPUT = ROOT / "data" / "raw" / "corpus.csv"
 DEFAULT_OUTPUT = ROOT / "data" / "processed" / "chunks.csv"
